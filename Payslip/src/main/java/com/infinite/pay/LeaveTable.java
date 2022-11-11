@@ -31,7 +31,7 @@ public class LeaveTable {
 	private String leaveReason;
 	
 	@Column(name="lossOfPay")
-	private int lossOfPay;
+	private double lossOfPay;
 
 	public int getLeaveId() {
 		return leaveId;
@@ -81,13 +81,14 @@ public class LeaveTable {
 		this.leaveReason = leaveReason;
 	}
 
-	public int getLossOfPay() {
+	public double getLossOfPay() {
 		return lossOfPay;
 	}
 
-	public void setLossOfPay(int lossOfPay) {
+	public void setLossOfPay(double lossOfPay) {
 		this.lossOfPay = lossOfPay;
 	}
+
 	
 	
 	

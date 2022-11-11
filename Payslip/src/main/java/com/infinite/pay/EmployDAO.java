@@ -1,8 +1,10 @@
 package com.infinite.pay;
 
 import java.util.Date;
+import java.util.List;
 
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -59,8 +61,8 @@ public class EmployDAO {
 		leaveTable.setNoOfDays(days);
 	
 		int no = leaveTable.getNoOfDays();
-		if(no > 3) {
-			leaveTable.setLossOfPay( no - 3 );
+		if(no > 3) {	
+			leaveTable.setLossOfPay(no -3);		
 		}
 		else {
 			leaveTable.setLossOfPay(0);
@@ -70,11 +72,93 @@ public class EmployDAO {
 		session.save(leaveTable);
 		transaction.commit();
 		session.close();
+		
+		int emp = leaveTable.getEmpno();
+		List<Employ> emplist = searchEmploy(emp);
+		Employ record = emplist.get(0);
+	
+
+		record.setLeaveAvailable((record.getLeaveAvailable()-3));
+		session = sessionFactory.openSession();
+		Transaction transaction1 = session.beginTransaction();
+		session.update(record);
+		transaction1.commit();
+		
 		return "Leave Applyed....";
 		
 	}
 	
+	//SearchtoEmploy
+	
+	public List<Employ> searchEmploy(int empno){
+		sessionFactory = SessionHelper.getSession();
+		Session session = sessionFactory.openSession();
+		Query query = session.createQuery("from Employ where empno = '"+empno+"'");
+		List<Employ> emplist = query.list();
+	    return emplist;	
+	}
+	
+	//SearchtoLeave
+	
+	public List<LeaveTable> searchLeave(int empno){
+		sessionFactory = SessionHelper.getSession();
+		Session session = sessionFactory.openSession();
+		Query query = session.createQuery("from LeaveTable where empno = '"+empno+"'");
+		List<LeaveTable> leavelist = query.list();
+		return leavelist;
+	}
+	
+	
+	public double takeHome(double salary) {
+		
+		sessionFactory = SessionHelper.getSession();
+		Session session = sessionFactory.openSession();
+		LeaveTable leaveTable = new LeaveTable();
+		Employ employ = new Employ();
+		int month=11;
+		int empno=4;
+		Object ob = payslip(4, 11);
+		long lop = (Long)ob;
+		lop = lop - 3;
+		double lossofpay = (salary/30.43) * lop;
+		
+		Query query =session.createQuery("from LeaveTable where empno=:empno AND (MONTH(leaveStartDate)=:month AND MONTH(leaveEndDate)=:month)").setParameter("empno", empno)
+				.setParameter("month", month);
+		
+		List<LeaveTable> leavelist = query.list();
+		
+		LeaveTable lastRecord = leavelist.get(leavelist.size()-1);
+		lastRecord.setLossOfPay(lossofpay);
+	
+		Transaction transaction = session.beginTransaction();
+		session.update(lastRecord);
+		transaction.commit();
+//		leaveTable.setLossOfPay(lossofpay);
+		
+		List<Employ> emplist = searchEmploy(4);
+		
+		double ntp = emplist.get(0).getNetPay();
+		
+		double take = ntp - lossofpay;
+		
+		return  take;
+	}
+	public Object payslip(int empno,int month) {
+		Employ employ = new Employ();
+		LeaveTable leaveTable = new LeaveTable();
+		sessionFactory = SessionHelper.getSession();
+		Session session = sessionFactory.openSession();
+		Query query=session.createQuery("select sum(noOfDays) from LeaveTable where empno=:empno AND (MONTH(leaveStartDate)=:month AND MONTH(leaveEndDate)=:month)").setParameter("empno", empno)
+				.setParameter("month", month);
+		List<Long> count = query.list();	
+		
 
+		return count.get(0);
+	}
+	
+	
+	
+	
 	
 	//date
 		public Date convertDate(java.util.Date dt) {
